@@ -1,0 +1,7 @@
+# CityPulse Code Ownership
+* @citypulse-team
+/frontend/ @citypulse-team/frontend
+/backend/ @citypulse-team/backend
+/intelligence/ @citypulse-team/intelligence
+/simulator/ @citypulse-team/simulator
+/shared/ @citypulse-team/core
