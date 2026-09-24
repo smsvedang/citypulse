@@ -1,0 +1,10 @@
+{
+  "indexes": [
+    {"collectionGroup":"events","queryScope":"COLLECTION","fields":[{"fieldPath":"location.zone","order":"ASCENDING"},{"fieldPath":"timestamp_ms","order":"DESCENDING"}]},
+    {"collectionGroup":"events","queryScope":"COLLECTION","fields":[{"fieldPath":"type","order":"ASCENDING"},{"fieldPath":"timestamp_ms","order":"DESCENDING"}]},
+    {"collectionGroup":"events","queryScope":"COLLECTION","fields":[{"fieldPath":"source","order":"ASCENDING"},{"fieldPath":"timestamp_ms","order":"DESCENDING"}]},
+    {"collectionGroup":"events","queryScope":"COLLECTION","fields":[{"fieldPath":"location.zone","order":"ASCENDING"},{"fieldPath":"type","order":"ASCENDING"},{"fieldPath":"timestamp_ms","order":"DESCENDING"}]},
+    {"collectionGroup":"events","queryScope":"COLLECTION","fields":[{"fieldPath":"location.zone","order":"ASCENDING"},{"fieldPath":"source","order":"ASCENDING"},{"fieldPath":"timestamp_ms","order":"DESCENDING"}]}
+  ],
+  "fieldOverrides": []
+}
