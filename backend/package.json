@@ -1,5 +1,5 @@
 {
-  "name": "citypulse-data-module",
+  "name": "@citypulse/backend",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -14,6 +14,7 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@citypulse/shared": "*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",

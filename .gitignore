@@ -7,5 +7,6 @@ dist/
 !.env.example
 *serviceAccount*.json
 *.log
+*.tsbuildinfo
 .DS_Store
 Thumbs.db

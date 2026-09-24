@@ -1,16 +1,19 @@
 {
-  "name": "@citypulse/client",
-  "version": "0.1.0",
+  "name": "@citypulse/frontend",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@citypulse/shared": "*",
+    "firebase": "^10.13.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0",
     "recharts": "^2.12.7"
   },
   "devDependencies": {

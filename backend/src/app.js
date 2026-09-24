@@ -14,6 +14,7 @@ import pulseRoutes from './routes/pulse.js';
 import anomaliesRoutes from './routes/anomalies.js';
 import correlationsRoutes from './routes/correlations.js';
 import alertsRoutes from './routes/alerts.js';
+import briefRoutes from './routes/brief.js';
 
 export function createApp() {
   const app = express();
@@ -39,6 +40,7 @@ export function createApp() {
   app.use('/api', anomaliesRoutes);
   app.use('/api', correlationsRoutes);
   app.use('/api', alertsRoutes);
+  app.use('/api', briefRoutes);
   app.use(notFoundMiddleware);
   app.use(errorHandler);
 
