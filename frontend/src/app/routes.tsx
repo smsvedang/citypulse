@@ -6,6 +6,7 @@ import { AlertsPage } from '../features/alerts/AlertsPage';
 import { AccountPage } from '../features/account/AccountPage';
 import { RoleChooserPage } from '../features/entry/RoleChooserPage';
 import { CitizenLayout } from '../features/citizen/CitizenLayout';
+import { VolunteerDashboardPage, VolunteerGuard, VolunteerLoginPage } from '../features/volunteer/VolunteerPage';
 import { AdminDashboardPage, AdminGuard, AdminLoginPage, AdminMessagesPage, AdminUsersPage } from '../features/admin/AdminPages';
 
 export const router = createBrowserRouter([
@@ -19,6 +20,14 @@ export const router = createBrowserRouter([
       { path: 'alerts', element: <AlertsPage /> },
       { path: 'account', element: <AccountPage /> },
       { path: '*', element: <Navigate to="/citizen" replace /> },
+    ],
+  },
+  { path: '/volunteer', element: <VolunteerLoginPage /> },
+  {
+    path: '/volunteer',
+    element: <VolunteerGuard />,
+    children: [
+      { path: 'dashboard', element: <VolunteerDashboardPage /> },
     ],
   },
   { path: '/admin', element: <AdminLoginPage /> },

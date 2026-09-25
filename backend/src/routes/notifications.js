@@ -16,7 +16,8 @@ const messageSchema = z.object({
   zoneId: z.string().min(1),
   title: z.string().trim().min(3).max(120),
   body: z.string().trim().min(3).max(2000),
-  channels: z.array(z.enum(['web', 'email'])).min(1).default(['web', 'email']),
+  channels: z.array(z.enum(['web', 'email', 'volunteer'])).min(1).default(['web', 'email']),
+  demoMode: z.boolean().optional(),
 });
 
 function isAdmin(req) {
@@ -58,7 +59,13 @@ router.post('/notifications/messages', async (req, res, next) => {
       source_refs: { operator: true },
     };
     if (db) await db.collection('alerts').doc(message.id).set(message);
-    const delivery = await sendZoneMessage(payload);
+    const delivery = await sendZoneMessage({
+      zoneId: payload.zoneId,
+      title: payload.title,
+      body: payload.body,
+      channels: payload.channels,
+      demoMode: payload.demoMode,
+    });
     res.status(201).json({ data: { message, delivery }, meta: { generated_at: new Date().toISOString() } });
   } catch (error) {
     next(error);

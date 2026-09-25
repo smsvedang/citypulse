@@ -15,6 +15,18 @@ export function notificationCountForSeverity(severity) {
   return notificationCountBySeverity[severity] || 1;
 }
 
+export function shouldUseDemoNotifications({ demoMode = false } = {}) {
+  if (!demoMode && env.DEMO_MODE !== true) return false;
+  const webConfigured = Boolean(getFirebaseMessaging());
+  const emailConfigured = Boolean(env.SMTP_HOST && env.SMTP_USER && (env.SMTP_PASSWORD || env.SMTP_PASS));
+  return Boolean(demoMode && !webConfigured && !emailConfigured) || Boolean(env.DEMO_MODE === true && !webConfigured && !emailConfigured);
+}
+
+function demoDelivery(channel, participantCount = 1) {
+  const sent = Math.max(1, Number(participantCount) || 1);
+  return { sent, skipped: false, demo: true, recipients: sent, channel };
+}
+
 export async function registerNotificationToken({ uid, token, email, emailOptIn, criticalOnly }) {
   if (!db || !token) return { registered: false, reason: 'firebase_unavailable' };
   await db.collection('notification_tokens').doc(tokenId(uid, token)).set({
@@ -57,28 +69,61 @@ async function sendEmailNotifications(recipients, message) {
   return { sent: results.filter((result) => result.status === 'fulfilled').length, skipped: false };
 }
 
-export async function sendZoneMessage({ zoneId, title, body, channels = ['web', 'email'] }) {
+export async function sendZoneMessage({ zoneId, title, body, channels = ['web', 'email'], demoMode = false }) {
   const rows = db ? await db.collection('notification_tokens').list() : [];
   const recipients = recipientsForZone(rows, zoneId);
-  const result = { web: { sent: 0, skipped: !channels.includes('web') }, email: { sent: 0, skipped: !channels.includes('email') } };
+  const result = {
+    web: { sent: 0, skipped: !channels.includes('web') },
+    email: { sent: 0, skipped: !channels.includes('email') },
+    volunteer: { sent: 0, skipped: !channels.includes('volunteer') },
+  };
+  const enableDemoDelivery = shouldUseDemoNotifications({ demoMode });
 
   if (channels.includes('web')) {
-    const messaging = getFirebaseMessaging();
-    const tokens = recipients.map((row) => row.token).filter(Boolean);
-    if (messaging && tokens.length) {
-      const response = await messaging.sendEachForMulticast({ tokens, notification: { title, body }, data: { zoneId, kind: 'operator_message' } });
-      result.web = { sent: response.successCount, skipped: false, recipients: tokens.length };
+    if (enableDemoDelivery) {
+      const demoCount = Math.max(3, recipients.length || 3);
+      result.web = { ...demoDelivery('web', demoCount), recipients: demoCount };
     } else {
-      result.web = { sent: 0, skipped: true, reason: messaging ? 'no_registered_tokens' : 'firebase_unavailable' };
+      const messaging = getFirebaseMessaging();
+      const tokens = recipients.map((row) => row.token).filter(Boolean);
+      if (messaging && tokens.length) {
+        const response = await messaging.sendEachForMulticast({ tokens, notification: { title, body }, data: { zoneId, kind: 'operator_message' } });
+        result.web = { sent: response.successCount, skipped: false, recipients: tokens.length };
+      } else {
+        result.web = { sent: 0, skipped: true, reason: messaging ? 'no_registered_tokens' : 'firebase_unavailable' };
+      }
     }
   }
 
-  if (channels.includes('email')) result.email = await sendEmailNotifications(recipients, { title, body });
-  logger.info({ zoneId, title, channels, delivery: result }, 'operator zone message dispatched');
+  if (channels.includes('email')) {
+    if (enableDemoDelivery) {
+      const demoCount = Math.max(2, recipients.filter((row) => row.email_opt_in && row.email).length || 2);
+      result.email = { ...demoDelivery('email', demoCount), recipients: demoCount };
+    } else {
+      result.email = await sendEmailNotifications(recipients, { title, body });
+    }
+  }
+
+  if (channels.includes('volunteer')) {
+    if (enableDemoDelivery) {
+      result.volunteer = { ...demoDelivery('volunteer', 3), recipients: 3 };
+    } else {
+      result.volunteer = { sent: 0, skipped: true, reason: 'volunteer_demo_only' };
+    }
+  }
+
+  logger.info({ zoneId, title, channels, delivery: result, demoMode: enableDemoDelivery }, 'operator zone message dispatched');
   return result;
 }
 
-export async function sendAlertNotifications(alert) {
+export async function sendAlertNotifications(alert, { demoMode = false } = {}) {
+  const enableDemoDelivery = shouldUseDemoNotifications({ demoMode });
+  if (enableDemoDelivery) {
+    const count = notificationCountForSeverity(alert.severity);
+    logger.info({ alertId: alert.id, severity: alert.severity, notificationCount: count, demoMode: true }, 'alert notifications dispatched in demo mode');
+    return { sent: count, skipped: false, notificationCount: count, demo: true };
+  }
+
   const messaging = getFirebaseMessaging();
   if (!messaging || !db) return { sent: 0, skipped: true };
 

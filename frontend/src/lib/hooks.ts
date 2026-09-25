@@ -172,9 +172,21 @@ export function useAlerts() {
   }, []);
 
   const acknowledgeAlert = useCallback((id: string) => {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: 'acknowledged' } : a))
-    );
+    setAlerts((prev) => {
+      const next = prev.map((a) => (a.id === id ? { ...a, status: 'acknowledged' } : a));
+      if (typeof window !== 'undefined') {
+        const raw = window.localStorage.getItem('citypulse-demo-data-v1');
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            window.localStorage.setItem('citypulse-demo-data-v1', JSON.stringify({ ...parsed, alerts: next }));
+          } catch {
+            // ignore malformed local storage state
+          }
+        }
+      }
+      return next;
+    });
   }, []);
 
   useEffect(() => {
