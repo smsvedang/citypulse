@@ -21,7 +21,7 @@ const defaultDemoData = {
   ],
   feedStatus: [
     { id: 'rainfeed', name: 'Weather feed', health: 'healthy' },
-    { id: 'trafficfeed', name: 'Traffic feed', health: 'degraded' },
+    { id: 'trafficfeed', name: 'Traffic feed', health: 'healthy' },
     { id: 'transitfeed', name: 'Transit feed', health: 'healthy' },
   ],
   pulse: { city: 'Jaipur', status: 'stable', activeRisk: 'moderate', updatedAt: new Date().toISOString(), top_zone: 'ZONE-2' },
@@ -63,7 +63,17 @@ function readLocalDemoData() {
   }
 
   try {
-    return { ...defaultDemoData, ...JSON.parse(stored) };
+    const parsed = JSON.parse(stored);
+    const normalized = {
+      ...defaultDemoData,
+      ...parsed,
+      feedStatus: Array.isArray(parsed?.feedStatus)
+        ? parsed.feedStatus.map((feed: any) => (
+            feed && feed.id === 'trafficfeed' ? { ...feed, health: 'healthy' } : feed
+          ))
+        : defaultDemoData.feedStatus,
+    };
+    return normalized;
   } catch {
     window.localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(defaultDemoData));
     return defaultDemoData;
