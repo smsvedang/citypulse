@@ -28,7 +28,9 @@ export function DemoPage() {
       });
       addLog('Backend replay worker accepted scenario. Ingestion started.');
     } catch {
-      addLog('Triggered local client sequence simulation.');
+      setRunning(false);
+      addLog('Demo replay is disabled. No synthetic sequence was started.');
+      return;
     }
 
     // Step progression

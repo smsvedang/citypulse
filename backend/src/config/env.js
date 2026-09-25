@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+dotenv.config({ path: path.join(repositoryRoot, '.env.local') });
+dotenv.config({ path: path.join(repositoryRoot, '.env') });
+dotenv.config({ path: '.env.local' });
 dotenv.config();
 
 const envSchema = z.object({
@@ -11,9 +17,9 @@ const envSchema = z.object({
   FIREBASE_SERVICE_ACCOUNT_B64: z.string().optional(),
   FIRESTORE_EMULATOR_HOST: z.string().optional(),
   DEMO_MODE: z.coerce.boolean().default(true),
-  FEED_MODE_WEATHER: z.enum(['live', 'synthetic']).default('synthetic'),
-  FEED_MODE_TRAFFIC: z.enum(['live', 'synthetic']).default('synthetic'),
-  FEED_MODE_TRANSIT: z.enum(['live', 'synthetic']).default('synthetic'),
+  FEED_MODE_WEATHER: z.enum(['live', 'synthetic']).default('live'),
+  FEED_MODE_TRAFFIC: z.enum(['live', 'synthetic']).default('live'),
+  FEED_MODE_TRANSIT: z.enum(['live', 'synthetic']).default('live'),
   FEED_INTERVAL_WEATHER_S: z.coerce.number().int().positive().default(300),
   FEED_INTERVAL_TRAFFIC_S: z.coerce.number().int().positive().default(60),
   FEED_INTERVAL_TRANSIT_S: z.coerce.number().int().positive().default(60),
@@ -24,6 +30,12 @@ const envSchema = z.object({
   MAX_EVENT_AGE_HOURS: z.coerce.number().int().positive().default(24),
   LOG_LEVEL: z.string().default('info'),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_FROM: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

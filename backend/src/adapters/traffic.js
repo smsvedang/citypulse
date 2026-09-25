@@ -8,7 +8,7 @@ export class TrafficAdapter extends BaseAdapter {
   }
 
   async fetchRaw() {
-    if (this.mode !== 'synthetic') return [];
+    if (this.mode !== 'synthetic') throw new Error('LIVE_TRAFFIC_PROVIDER_NOT_CONFIGURED');
     const now = new Date();
     return generateTrafficSpike('Z04', { now, seed: 11, count: 3, severityFrom: 0.45, severityTo: 0.7 });
   }

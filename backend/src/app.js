@@ -15,6 +15,9 @@ import anomaliesRoutes from './routes/anomalies.js';
 import correlationsRoutes from './routes/correlations.js';
 import alertsRoutes from './routes/alerts.js';
 import briefRoutes from './routes/brief.js';
+import notificationRoutes from './routes/notifications.js';
+import adminRoutes from './routes/admin.js';
+import authRoutes from './routes/auth.js';
 
 export function createApp() {
   const app = express();
@@ -28,8 +31,12 @@ export function createApp() {
     next();
   });
 
-  app.use(rateLimit({ windowMs: 60 * 1000, max: 120, message: { error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded' } } }));
-  app.use(rateLimit({ windowMs: 60 * 1000, max: 20, keyGenerator: (req) => req.ip, skipSuccessfulRequests: false, handler: (_req, res) => res.status(429).json({ error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded' } }) }));
+  app.use(rateLimit({
+    windowMs: 60 * 1000,
+    max: 120,
+    skip: (req) => req.method === 'GET' && req.path === '/api/feed-status',
+    message: { error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded' } },
+  }));
 
   app.use(healthRoutes);
   app.use('/api', zoneRoutes);
@@ -41,6 +48,9 @@ export function createApp() {
   app.use('/api', correlationsRoutes);
   app.use('/api', alertsRoutes);
   app.use('/api', briefRoutes);
+  app.use('/api', notificationRoutes);
+  app.use('/api', adminRoutes);
+  app.use('/api', authRoutes);
   app.use(notFoundMiddleware);
   app.use(errorHandler);
 

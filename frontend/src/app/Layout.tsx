@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useFeedStatus, useEvents } from '../lib/hooks';
+import { onAuthStateChanged, type User } from 'firebase/auth';
+import { getFirebaseAuth } from '../lib/firebase';
 
 export function Layout() {
   const { overallHealth, feedStatus } = useFeedStatus();
   const { events } = useEvents(20);
   const location = useLocation();
   const [timeStr, setTimeStr] = useState<string>('');
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -24,6 +27,11 @@ export function Layout() {
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const auth = getFirebaseAuth();
+    return auth ? onAuthStateChanged(auth, setUser) : undefined;
   }, []);
 
   const hasSynthetic = events.some((e) => e.metadata?.synthetic === true);
@@ -97,6 +105,23 @@ export function Layout() {
             className="px-3 py-1 rounded-md text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-colors shadow-sm shadow-cyan-600/30"
           >
             ▶ Replay Scenario
+          </NavLink>
+
+          <NavLink
+            to="/account"
+            aria-label="Open user panel"
+            className={({ isActive }) =>
+              `flex items-center gap-2 rounded-full border px-2 py-1 transition-colors ${
+                isActive
+                  ? 'border-cyan-400/60 bg-cyan-500/15 text-cyan-200'
+                  : 'border-slate-700 bg-slate-800/70 text-slate-300 hover:border-cyan-500/50 hover:text-white'
+              }`
+            }
+          >
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400 text-xs font-black text-slate-950">
+              {user ? (user.displayName || user.email || 'C').split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() : '?'}
+            </span>
+            <span className="hidden lg:block text-xs font-semibold">{user?.displayName || user?.email || 'Citizen panel'}</span>
           </NavLink>
         </div>
       </header>

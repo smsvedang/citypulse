@@ -31,14 +31,7 @@ export function BriefPage() {
     }
   };
 
-  const currentBrief = brief || pulse?.brief || {
-    headline: 'Localized Rain Triggering Riverside Congestion',
-    what_happened: 'A localized weather alert with heavy rain in Zone 4 was followed by rising traffic incidents and Route 12 transit delays along the Riverside corridor.',
-    why_it_matters: 'Traffic incident volume is running at 2.4x the historical baseline, with transit delays extending up to 18 minutes.',
-    evidence: ['evt_rain_z04_001', 'evt_traf_z04_002', 'evt_tran_z04_003'],
-    uncertainty: 'Observed temporal overlap suggests traffic response to precipitation, though correlation does not prove causation.',
-    source: 'fallback',
-  };
+  const currentBrief = brief || pulse?.brief;
 
   return (
     <div className="space-y-6">
@@ -72,18 +65,18 @@ export function BriefPage() {
             </div>
             <div>
               <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">CIVIC PULSE SUMMARY</span>
-              <h2 className="text-xl md:text-2xl font-extrabold text-white">{currentBrief.headline}</h2>
+              <h2 className="text-xl md:text-2xl font-extrabold text-white">{currentBrief?.headline || 'No verified brief available'}</h2>
             </div>
           </div>
 
           <span
             className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
-              currentBrief.source === 'groq'
+              currentBrief?.source === 'groq'
                 ? 'bg-purple-950/60 border-purple-500/50 text-purple-300'
                 : 'bg-cyan-950/60 border-cyan-500/50 text-cyan-300'
             }`}
           >
-            {currentBrief.source === 'groq' ? 'Groq Llama 3.3' : 'Deterministic Grounded'}
+            {currentBrief?.source === 'groq' ? 'Groq Llama 3.3' : 'No verified brief'}
           </span>
         </div>
 
@@ -94,7 +87,7 @@ export function BriefPage() {
               What Happened
             </h3>
             <p className="text-sm md:text-base text-slate-200 leading-relaxed font-normal bg-slate-950/40 p-4 rounded-xl border border-slate-800/80">
-              {currentBrief.what_happened}
+              {currentBrief?.what_happened || 'The backend has not returned verified event data for this brief.'}
             </p>
           </div>
 
@@ -103,7 +96,7 @@ export function BriefPage() {
               Why It Matters
             </h3>
             <p className="text-sm md:text-base text-slate-300 leading-relaxed bg-slate-950/40 p-4 rounded-xl border border-slate-800/80">
-              {currentBrief.why_it_matters}
+              {currentBrief?.why_it_matters || 'No impact assessment is available without verified events.'}
             </p>
           </div>
 
@@ -113,7 +106,7 @@ export function BriefPage() {
               Grounded Evidence
             </h3>
             <div className="flex flex-wrap gap-2">
-              {(currentBrief.evidence || []).map((item: string, idx: number) => (
+              {(currentBrief?.evidence || []).map((item: string, idx: number) => (
                 <div
                   key={idx}
                   className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-cyan-300 flex items-center gap-1.5"
@@ -133,7 +126,7 @@ export function BriefPage() {
                 Uncertainty &amp; Causation Notice
               </h4>
               <p className="text-xs text-amber-200/90 leading-relaxed">
-                {currentBrief.uncertainty ||
+                {currentBrief?.uncertainty ||
                   'Never claim causation from correlation alone. Models synthesize structured evidence without raw speculation.'}
               </p>
             </div>

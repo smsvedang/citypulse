@@ -1,4 +1,8 @@
 import { logger } from './logger.js';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getMessaging } from 'firebase-admin/messaging';
 
 class MemoryCollection {
   constructor(store, collectionName) {
@@ -76,13 +80,49 @@ class MemoryStore {
 
 const memoryStore = new MemoryStore();
 
-export function getFirebaseDb() {
-  if (process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_PROJECT_ID) {
-    logger.warn('Using Firestore emulator or configured project; memory fallback is not active.');
-    return null;
+function getFirebaseDb() {
+  try {
+    if (process.env.FIRESTORE_EMULATOR_HOST) {
+      const app = getApps()[0] || initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID || 'citypulse-local' });
+      logger.info({ emulator: process.env.FIRESTORE_EMULATOR_HOST }, 'Using Firestore emulator');
+      return getFirestore(app);
+    }
+
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
+      const serviceAccount = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_B64, 'base64').toString('utf8'));
+      const app = getApps()[0] || initializeApp({ credential: cert(serviceAccount), projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id });
+      logger.info({ projectId: serviceAccount.project_id }, 'Using Cloud Firestore');
+      return getFirestore(app);
+    }
+  } catch (error) {
+    logger.warn({ error: String(error.message || error) }, 'Firestore initialization failed; using memory store');
   }
+
   return memoryStore;
 }
 
 export const db = getFirebaseDb();
+
+export function getFirebaseMessaging() {
+  try {
+    const app = getApps()[0];
+    if (!app) return null;
+    return getMessaging(app);
+  } catch (error) {
+    logger.warn({ error: String(error.message || error) }, 'Firebase Messaging unavailable');
+    return null;
+  }
+}
+
+export function getFirebaseAuth() {
+  try {
+    const app = getApps()[0];
+    if (!app) return null;
+    return getAuth(app);
+  } catch (error) {
+    logger.warn({ error: String(error.message || error) }, 'Firebase Auth unavailable');
+    return null;
+  }
+}
+
 export default db;

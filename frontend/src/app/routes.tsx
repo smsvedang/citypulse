@@ -1,27 +1,35 @@
 import React from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { Layout } from './Layout';
-import { LiveMapPage } from '../features/map/LiveMapPage';
+import { LiveMapDashboard } from '../features/map/LiveMapDashboard';
 import { ZoneDetailPage } from '../features/zone/ZoneDetailPage';
-import { AnalyticsPage } from '../features/analytics/AnalyticsPage';
 import { AlertsPage } from '../features/alerts/AlertsPage';
-import { BriefPage } from '../features/brief/BriefPage';
-import { DemoPage } from '../features/demo/DemoPage';
-import { FeedStatusPage } from '../features/feed/FeedStatusPage';
+import { AccountPage } from '../features/account/AccountPage';
+import { RoleChooserPage } from '../features/entry/RoleChooserPage';
+import { CitizenLayout } from '../features/citizen/CitizenLayout';
+import { AdminDashboardPage, AdminGuard, AdminLoginPage, AdminMessagesPage, AdminUsersPage } from '../features/admin/AdminPages';
 
 export const router = createBrowserRouter([
+  { path: '/', element: <RoleChooserPage /> },
   {
-    path: '/',
-    element: <Layout />,
+    path: '/citizen',
+    element: <CitizenLayout />,
     children: [
-      { index: true, element: <LiveMapPage /> },
+      { index: true, element: <LiveMapDashboard /> },
       { path: 'zone/:id', element: <ZoneDetailPage /> },
-      { path: 'analytics', element: <AnalyticsPage /> },
       { path: 'alerts', element: <AlertsPage /> },
-      { path: 'brief', element: <BriefPage /> },
-      { path: 'demo', element: <DemoPage /> },
-      { path: 'feed-status', element: <FeedStatusPage /> },
-      { path: '*', element: <Navigate to="/" replace /> },
+      { path: 'account', element: <AccountPage /> },
+      { path: '*', element: <Navigate to="/citizen" replace /> },
     ],
   },
+  { path: '/admin', element: <AdminLoginPage /> },
+  {
+    path: '/admin',
+    element: <AdminGuard />,
+    children: [
+      { path: 'dashboard', element: <AdminDashboardPage /> },
+      { path: 'messages', element: <AdminMessagesPage /> },
+      { path: 'users', element: <AdminUsersPage /> },
+    ],
+  },
+  { path: '*', element: <Navigate to="/" replace /> },
 ]);

@@ -1,4 +1,6 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getMessaging, getToken, isSupported, type Messaging } from 'firebase/messaging';
 import {
   getFirestore,
   connectFirestoreEmulator,
@@ -6,19 +8,27 @@ import {
 } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'demo-api-key',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'citypulse-demo.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'citypulse-demo',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'citypulse-demo.appspot.com',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:123456789:web:abcdef',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
+
+const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
+let auth: Auth | null = null;
+let messaging: Messaging | null = null;
 
 export function getFirebaseApp(): FirebaseApp | null {
   if (typeof window === 'undefined') return null;
+  if (!hasFirebaseConfig) {
+    console.warn('Firebase Auth is unavailable: complete VITE_FIREBASE_* settings are required.');
+    return null;
+  }
   if (!getApps().length) {
     try {
       app = initializeApp(firebaseConfig);
@@ -46,6 +56,30 @@ export function getFirestoreDb(): Firestore | null {
     return db;
   } catch (err) {
     console.warn('Firestore connection fallback to API/fixtures:', err);
+    return null;
+  }
+}
+
+export function getFirebaseAuth(): Auth | null {
+  const currentApp = getFirebaseApp();
+  if (!currentApp) return null;
+  if (!auth) auth = getAuth(currentApp);
+  return auth;
+}
+
+export async function getWebPushToken(): Promise<string | null> {
+  const currentApp = getFirebaseApp();
+  const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+  if (!currentApp || !vapidKey || !(await isSupported())) return null;
+
+  try {
+    messaging = messaging || getMessaging(currentApp);
+    const serviceWorkerUrl = new URL('/firebase-messaging-sw.js', window.location.origin);
+    Object.entries(firebaseConfig).forEach(([key, value]) => serviceWorkerUrl.searchParams.set(key, value));
+    const serviceWorkerRegistration = await navigator.serviceWorker.register(serviceWorkerUrl.toString());
+    return await getToken(messaging, { vapidKey, serviceWorkerRegistration });
+  } catch (error) {
+    console.warn('Web push token unavailable:', error);
     return null;
   }
 }

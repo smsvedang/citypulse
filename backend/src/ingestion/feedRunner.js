@@ -1,6 +1,7 @@
 import { validateEvent } from '../validators/eventValidator.js';
 import { scrubPii } from '../lib/pii.js';
 import { addEvent } from '../repositories/events.js';
+import { createAlertForEvent } from '../repositories/alerts.js';
 import { upsertFeedStatus } from '../repositories/feedStatus.js';
 import { logger } from '../lib/logger.js';
 import { createDeterministicEventId } from '../lib/ids.js';
@@ -38,6 +39,7 @@ export async function runFeed(adapter, { now = new Date() } = {}) {
     const batch = normalized.slice(0, 400);
     for (const event of batch) {
       await addEvent(event);
+      await createAlertForEvent(event);
       accepted += 1;
     }
 

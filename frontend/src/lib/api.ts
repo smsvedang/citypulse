@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export class ApiError extends Error {
   constructor(message: string, public status?: number, public details?: unknown) {
@@ -8,7 +8,10 @@ export class ApiError extends Error {
 }
 
 export async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
-  const url = path.startsWith('http') ? path : `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  const normalizedPath = BASE_URL.endsWith('/api') && path.startsWith('/api/') ? path.slice(4) : path;
+  const url = normalizedPath.startsWith('http')
+    ? normalizedPath
+    : `${BASE_URL}${normalizedPath.startsWith('/') ? '' : '/'}${normalizedPath}`;
   
   const res = await fetch(url, {
     ...options,

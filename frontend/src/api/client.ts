@@ -10,7 +10,8 @@ export class ApiError extends Error {
 }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(`${API}${path}`, {
+  const normalizedPath = API.endsWith('/api') && path.startsWith('/api/') ? path.slice(4) : path;
+  const r = await fetch(`${API}${normalizedPath}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',

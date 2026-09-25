@@ -8,7 +8,7 @@ export class TransitAdapter extends BaseAdapter {
   }
 
   async fetchRaw() {
-    if (this.mode !== 'synthetic') return [];
+    if (this.mode !== 'synthetic') throw new Error('LIVE_TRANSIT_PROVIDER_NOT_CONFIGURED');
     const now = new Date();
     return generateTransitDelay('Z04', { now, seed: 5, routes: 2 });
   }

@@ -1,10 +1,10 @@
 import { db } from '../lib/firebase.js';
 
 const defaultStatus = {
-  weather: { source: 'weather', health: 'healthy', error_count: 0, last_success: null, latency_ms: 0, mode: 'synthetic', expected_interval_s: 300 },
-  traffic: { source: 'traffic', health: 'healthy', error_count: 0, last_success: null, latency_ms: 0, mode: 'synthetic', expected_interval_s: 60 },
-  transit: { source: 'transit', health: 'healthy', error_count: 0, last_success: null, latency_ms: 0, mode: 'synthetic', expected_interval_s: 60 },
-  synthetic: { source: 'synthetic', health: 'healthy', error_count: 0, last_success: null, latency_ms: 0, mode: 'synthetic', expected_interval_s: 60 },
+  weather: { source: 'weather', health: 'down', error_count: 0, last_success: null, latency_ms: 0, mode: 'live', expected_interval_s: 300 },
+  traffic: { source: 'traffic', health: 'down', error_count: 0, last_success: null, latency_ms: 0, mode: 'live', expected_interval_s: 60 },
+  transit: { source: 'transit', health: 'down', error_count: 0, last_success: null, latency_ms: 0, mode: 'live', expected_interval_s: 60 },
+  synthetic: { source: 'synthetic', health: 'down', error_count: 0, last_success: null, latency_ms: 0, mode: 'disabled', expected_interval_s: 60 },
 };
 
 export async function getFeedStatus(source) {

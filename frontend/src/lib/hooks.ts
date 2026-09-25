@@ -1,17 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from './api';
-import { fixtures } from '@citypulse/shared';
 
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === 'true';
 
 export function useZones() {
-  const [zones, setZones] = useState<any[]>(fixtures.zones);
+  const [zones, setZones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchZones = useCallback(async () => {
     if (USE_FIXTURES) {
-      setZones(fixtures.zones);
+      setZones([]);
       setLoading(false);
       return;
     }
@@ -20,12 +19,12 @@ export function useZones() {
       if (Array.isArray(data) && data.length > 0) {
         setZones(data);
       } else {
-        setZones(fixtures.zones);
+        setZones([]);
       }
       setError(null);
     } catch (err: any) {
       console.warn('Using fixture zones fallback:', err.message);
-      setZones(fixtures.zones);
+      setZones([]);
     } finally {
       setLoading(false);
     }
@@ -41,13 +40,13 @@ export function useZones() {
 }
 
 export function useEvents(limit = 200) {
-  const [events, setEvents] = useState<any[]>(fixtures.events);
+  const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchEvents = useCallback(async () => {
     if (USE_FIXTURES) {
-      setEvents(fixtures.events);
+      setEvents([]);
       setLoading(false);
       return;
     }
@@ -56,12 +55,12 @@ export function useEvents(limit = 200) {
       if (Array.isArray(data) && data.length > 0) {
         setEvents(data);
       } else {
-        setEvents(fixtures.events);
+        setEvents([]);
       }
       setError(null);
     } catch (err: any) {
       console.warn('Using fixture events fallback:', err.message);
-      setEvents(fixtures.events);
+      setEvents([]);
     } finally {
       setLoading(false);
     }
@@ -77,13 +76,13 @@ export function useEvents(limit = 200) {
 }
 
 export function useAnomalies() {
-  const [anomalies, setAnomalies] = useState<any[]>(fixtures.anomalies);
+  const [anomalies, setAnomalies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAnomalies = useCallback(async () => {
     if (USE_FIXTURES) {
-      setAnomalies(fixtures.anomalies);
+      setAnomalies([]);
       setLoading(false);
       return;
     }
@@ -92,11 +91,11 @@ export function useAnomalies() {
       if (Array.isArray(data) && data.length > 0) {
         setAnomalies(data);
       } else {
-        setAnomalies(fixtures.anomalies);
+        setAnomalies([]);
       }
       setError(null);
     } catch (err: any) {
-      setAnomalies(fixtures.anomalies);
+      setAnomalies([]);
     } finally {
       setLoading(false);
     }
@@ -112,13 +111,13 @@ export function useAnomalies() {
 }
 
 export function useCorrelations() {
-  const [correlations, setCorrelations] = useState<any[]>(fixtures.correlations);
+  const [correlations, setCorrelations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCorrelations = useCallback(async () => {
     if (USE_FIXTURES) {
-      setCorrelations(fixtures.correlations);
+      setCorrelations([]);
       setLoading(false);
       return;
     }
@@ -127,11 +126,11 @@ export function useCorrelations() {
       if (Array.isArray(data) && data.length > 0) {
         setCorrelations(data);
       } else {
-        setCorrelations(fixtures.correlations);
+        setCorrelations([]);
       }
       setError(null);
     } catch (err: any) {
-      setCorrelations(fixtures.correlations);
+      setCorrelations([]);
     } finally {
       setLoading(false);
     }
@@ -147,13 +146,13 @@ export function useCorrelations() {
 }
 
 export function useAlerts() {
-  const [alerts, setAlerts] = useState<any[]>(fixtures.alerts);
+  const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAlerts = useCallback(async () => {
     if (USE_FIXTURES) {
-      setAlerts(fixtures.alerts);
+      setAlerts([]);
       setLoading(false);
       return;
     }
@@ -162,11 +161,11 @@ export function useAlerts() {
       if (Array.isArray(data)) {
         setAlerts(data);
       } else {
-        setAlerts(fixtures.alerts);
+        setAlerts([]);
       }
       setError(null);
     } catch (err: any) {
-      setAlerts(fixtures.alerts);
+      setAlerts([]);
     } finally {
       setLoading(false);
     }
@@ -188,13 +187,13 @@ export function useAlerts() {
 }
 
 export function useFeedStatus() {
-  const [feedStatus, setFeedStatus] = useState<any[]>(fixtures.feed_status);
+  const [feedStatus, setFeedStatus] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchFeedStatus = useCallback(async () => {
     if (USE_FIXTURES) {
-      setFeedStatus(fixtures.feed_status);
+      setFeedStatus([]);
       setLoading(false);
       return;
     }
@@ -203,11 +202,11 @@ export function useFeedStatus() {
       if (Array.isArray(data) && data.length > 0) {
         setFeedStatus(data);
       } else {
-        setFeedStatus(fixtures.feed_status);
+        setFeedStatus([]);
       }
       setError(null);
     } catch (err: any) {
-      setFeedStatus(fixtures.feed_status);
+      setFeedStatus([]);
     } finally {
       setLoading(false);
     }
@@ -215,7 +214,7 @@ export function useFeedStatus() {
 
   useEffect(() => {
     fetchFeedStatus();
-    const interval = setInterval(fetchFeedStatus, 5000);
+    const interval = setInterval(fetchFeedStatus, 15000);
     return () => clearInterval(interval);
   }, [fetchFeedStatus]);
 
@@ -228,13 +227,13 @@ export function useFeedStatus() {
 }
 
 export function usePulse() {
-  const [pulse, setPulse] = useState<any>(fixtures.pulse);
+  const [pulse, setPulse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchPulse = useCallback(async () => {
     if (USE_FIXTURES) {
-      setPulse(fixtures.pulse);
+      setPulse(null);
       setLoading(false);
       return;
     }
@@ -243,11 +242,11 @@ export function usePulse() {
       if (data && typeof data === 'object') {
         setPulse(data);
       } else {
-        setPulse(fixtures.pulse);
+        setPulse(null);
       }
       setError(null);
     } catch (err: any) {
-      setPulse(fixtures.pulse);
+      setPulse(null);
     } finally {
       setLoading(false);
     }

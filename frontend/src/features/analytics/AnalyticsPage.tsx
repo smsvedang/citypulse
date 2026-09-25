@@ -24,7 +24,10 @@ export function AnalyticsPage() {
         return;
       }
     } catch {
-      // Compute analytics dynamically from shared hooks!
+      setAnalyticsData(null);
+      setError('Analytics service is unavailable. No sample data is shown.');
+      setLoading(false);
+      return;
     }
 
     // Dynamic computation from loaded data
@@ -53,23 +56,11 @@ export function AnalyticsPage() {
       };
     });
 
-    const now = Date.now();
-    const eventVolume = [60, 45, 30, 15, 0].map((mins) => {
-      const time = new Date(now - mins * 60 * 1000).toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-      return {
-        bucketStart: time,
-        count: Math.floor(events.length / 5) + Math.floor(Math.random() * 3),
-      };
-    });
-
     const anomalyTimeline = anomalies.map((a) => ({
-      timestamp: a.detected_at || new Date().toISOString(),
-      zone: a.zone_id || 'Z04',
-      type: a.event_type || 'traffic_incident',
-      score: a.score || 2.4,
+      timestamp: a.detected_at,
+      zone: a.zone_id,
+      type: a.event_type,
+      score: a.score,
     }));
 
     const feedHealthSummary = feedStatus.map((f) => ({
@@ -79,7 +70,7 @@ export function AnalyticsPage() {
     }));
 
     setAnalyticsData({
-      eventVolume,
+      eventVolume: [],
       eventsBySource,
       anomalyTimeline,
       zoneActivity,

@@ -26,7 +26,7 @@ router.get('/feed-status', async (_req, res, next) => {
 
     const missing = ['weather', 'traffic', 'transit', 'synthetic'].filter((source) => !entries.some((item) => item.source === source));
     for (const source of missing) {
-      entries.push({ source, health: 'healthy', error_count: 0, last_success: null, latency_ms: 0, mode: 'synthetic', expected_interval_s: 60, consecutive_failures: 0 });
+      entries.push({ source, health: 'down', error_count: 0, last_success: null, latency_ms: 0, mode: source === 'synthetic' ? 'disabled' : 'live', expected_interval_s: 60, consecutive_failures: 0 });
     }
 
     const overall = entries.every((item) => item.health === 'healthy') ? 'healthy' : entries.every((item) => item.health === 'down') ? 'down' : 'degraded';
