@@ -43,6 +43,19 @@ npm run dev
 - **Frontend Application:** [http://localhost:5173](http://localhost:5173)
 - **Backend API:** [http://localhost:8080](http://localhost:8080)
 
+### Deploy to Vercel
+
+The repository is configured as one Vercel project. Vercel builds `frontend/dist` and serves the Express API through `api/[...path].js`.
+
+```bash
+npm install
+npm run build
+```
+
+Import the repository into Vercel with the project root left at the repository root. Add production environment variables from `.env.example`; Firebase credentials are optional when using the in-memory store.
+
+The deployed dashboard is available at `/`, and the API remains available under `/api/*`.
+
 ---
 
 ## 🧪 Testing & Verification
@@ -89,5 +102,7 @@ The canonical demo scenario (**Rain in Zone 4 → Traffic Congestion Spike → T
 
 ## 📄 Documentation
 
+- [Environment Setup Guide](docs/environment-setup-guide.md)
 - [Phase 1 Integration Audit](docs/integration-audit.md)
 - [Integration Report](docs/integration-report.md)
+# citypulse
