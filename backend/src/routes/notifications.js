@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { registerNotificationToken, sendZoneMessage } from '../services/notificationService.js';
+import { addEvent } from '../repositories/events.js';
 import { db, getFirebaseAuth } from '../lib/firebase.js';
 
 const router = Router();
@@ -44,6 +45,46 @@ router.post('/notifications/tokens', async (req, res, next) => {
   }
 });
 
+async function writeOperatorEvent(zoneId, title, body) {
+  const now = new Date().toISOString();
+  const defaultLocation = { zone: zoneId === 'CITY' ? 'CITY' : (zoneId || 'CITY'), lat: 26.9124, lng: 75.7873 };
+
+  let location = defaultLocation;
+  if (db && zoneId && zoneId !== 'CITY') {
+    try {
+      const zoneDoc = await db.collection('zones').doc(zoneId).get();
+      const zoneData = zoneDoc.exists ? zoneDoc.data() : null;
+      if (zoneData?.center) {
+        location = {
+          zone: zoneId,
+          lat: Number(zoneData.center.lat ?? defaultLocation.lat),
+          lng: Number(zoneData.center.lng ?? defaultLocation.lng),
+        };
+      }
+    } catch {
+      // fall back to the default city center; the live UI still refreshes with the operator event
+    }
+  }
+
+  const event = {
+    id: `event_operator_${Date.now()}`,
+    title,
+    description: body,
+    source: 'operator',
+    type: 'operator',
+    severity: 0.92,
+    zone_id: zoneId,
+    location,
+    timestamp: now,
+    created_at: now,
+    metadata: { manual: true, operator: true },
+    confidence: 1,
+  };
+
+  await addEvent(event);
+  return event;
+}
+
 router.post('/notifications/messages', async (req, res, next) => {
   try {
     if (!isAdmin(req)) return res.status(401).json({ message: 'Admin credentials required.' });
@@ -58,7 +99,10 @@ router.post('/notifications/messages', async (req, res, next) => {
       created_at: new Date().toISOString(),
       source_refs: { operator: true },
     };
+
     if (db) await db.collection('alerts').doc(message.id).set(message);
+
+    const event = await writeOperatorEvent(payload.zoneId, payload.title, payload.body).catch(() => null);
     const delivery = await sendZoneMessage({
       zoneId: payload.zoneId,
       title: payload.title,
@@ -66,7 +110,7 @@ router.post('/notifications/messages', async (req, res, next) => {
       channels: payload.channels,
       demoMode: payload.demoMode,
     });
-    res.status(201).json({ data: { message, delivery }, meta: { generated_at: new Date().toISOString() } });
+    res.status(201).json({ data: { message, event, delivery }, meta: { generated_at: new Date().toISOString() } });
   } catch (error) {
     next(error);
   }

@@ -39,7 +39,7 @@ export function Layout() {
 
   const navItems = [
     { path: '/', label: 'Live Map', icon: '🗺️' },
-    { path: '/zone/Z04', label: 'Zone Detail', icon: '🏙️' },
+    { path: '/citizen/zone/ZONE-1', label: 'Amber Colony', icon: '🏙️' },
     { path: '/analytics', label: 'Analytics', icon: '📊' },
     { path: '/alerts', label: 'Alerts', icon: '🚨' },
     { path: '/brief', label: 'AI Brief', icon: '✦' },

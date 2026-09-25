@@ -2,6 +2,26 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useZones, useEvents, useAnomalies, useCorrelations } from '../../lib/hooks';
 
+function normalizeZoneReference(value?: string | null) {
+  if (!value) return '';
+  const raw = value.trim().toUpperCase();
+
+  if (raw.startsWith('ZONE-')) {
+    return raw;
+  }
+
+  if (/^Z\d+$/.test(raw)) {
+    const num = raw.replace(/^Z0*/, '') || '0';
+    return `ZONE-${Number(num)}`;
+  }
+
+  if (/^\d+$/.test(raw)) {
+    return `ZONE-${Number(raw)}`;
+  }
+
+  return raw;
+}
+
 export function ZoneDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -10,26 +30,23 @@ export function ZoneDetailPage() {
   const { anomalies } = useAnomalies();
   const { correlations } = useCorrelations();
 
-  // Normalize zone id (Z01..Z06 or 1..6)
-  const normalizedId = id
-    ? id.startsWith('Z')
-      ? id
-      : `Z0${id}`
-    : 'Z04';
+  const normalizedId = normalizeZoneReference(id || 'ZONE-1');
 
-  const zone = zones.find((z) => z.id === normalizedId) || {
-    id: normalizedId,
-    name: `Zone ${normalizedId.replace('Z0', '')}`,
-    center: { lat: 26.91, lng: 75.79 },
-    baseline_config: { window_minutes: 60, threshold: 2.0 },
-    status: 'Elevated',
-    place: 'Jaipur Urban District',
-    residents: '15,000',
-  };
+  const zone =
+    zones.find((z) => normalizeZoneReference(z.id) === normalizedId) ||
+    {
+      id: normalizedId,
+      name: normalizedId.replace('ZONE-', 'Zone '),
+      center: { lat: 26.91, lng: 75.79 },
+      baseline_config: { window_minutes: 60, threshold: 2.0 },
+      status: 'Elevated',
+      place: 'Jaipur Urban District',
+      residents: '15,000',
+    };
 
-  const zoneEvents = events.filter((e) => e.location?.zone === normalizedId);
-  const zoneAnomalies = anomalies.filter((a) => a.zone_id === normalizedId);
-  const zoneCorrelations = correlations.filter((c) => c.zone_id === normalizedId || !c.zone_id);
+  const zoneEvents = events.filter((e) => normalizeZoneReference(e.location?.zone || e.zone_id) === normalizedId);
+  const zoneAnomalies = anomalies.filter((a) => normalizeZoneReference(a.zone_id) === normalizedId);
+  const zoneCorrelations = correlations.filter((c) => normalizeZoneReference(c.zone_id) === normalizedId || !c.zone_id);
 
   return (
     <div className="space-y-6">

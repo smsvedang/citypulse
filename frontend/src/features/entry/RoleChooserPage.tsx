@@ -6,36 +6,115 @@ export function RoleChooserPage() {
   const navigate = useNavigate();
   const demoMode = window.sessionStorage.getItem('citypulse-demo-mode') === 'true';
 
+  const workspaceCards = [
+    {
+      tone: 'citizen',
+      icon: '◉',
+      label: 'Citizen panel',
+      text: 'See live city conditions, local alerts, and neighborhood-based recommendations in one place.',
+      cta: 'Enter citizen panel',
+      action: () => navigate('/citizen'),
+      metrics: ['18 live signals', '4 alert channels'],
+    },
+    {
+      tone: 'volunteer',
+      icon: '✦',
+      label: 'Volunteer board',
+      text: 'Coordinate field response, monitor evolving incidents, and stay aligned with public guidance.',
+      cta: 'Open volunteer board',
+      action: () => navigate('/volunteer'),
+      metrics: ['12 teams online', '3 urgent areas'],
+    },
+    {
+      tone: 'admin',
+      icon: '▣',
+      label: 'Admin dashboard',
+      text: 'Operate the city command center with analytics, dispatch oversight, and fast civic messaging.',
+      cta: 'Admin sign in',
+      action: () => navigate('/admin'),
+      metrics: ['6 district feeds', '1 live control room'],
+    },
+  ];
+
   return (
-    <main className="min-h-screen bg-slate-950 px-5 py-10 text-slate-100 md:px-10">
-      <div className="mx-auto flex max-w-5xl justify-end"><ThemeToggle /></div>
-      <div className="mx-auto flex min-h-[80vh] max-w-5xl flex-col justify-center">
-        <p className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-400">CityPulse live civic intelligence</p>
-        <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-white md:text-6xl">Choose your CityPulse workspace</h1>
-        <p className="mt-5 max-w-2xl text-base leading-7 text-slate-400">Use the citizen panel for local conditions and alerts. Authorized operators can sign in to the administrative dashboard.</p>
+    <main className="role-chooser-page">
+      <div className="role-chooser-shell">
+        <header className="role-topbar">
+          <div className="role-brand-row">
+            <span className="brand-mark">CP</span>
+            <div>
+              <span className="eyebrow">CityPulse</span>
+              <strong>civic intelligence</strong>
+            </div>
+          </div>
+          <ThemeToggle />
+        </header>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          <button onClick={() => navigate('/citizen')} className="group rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-7 text-left transition hover:-translate-y-1 hover:border-cyan-400 hover:bg-cyan-500/15">
-            <span className="text-4xl" aria-hidden="true">◉</span>
-            <h2 className="mt-6 text-2xl font-bold text-white">Citizen panel</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">See live city conditions, zone alerts, and manage your notification preferences.</p>
-            <span className="mt-7 inline-flex rounded-lg bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950">Enter citizen panel</span>
-          </button>
+        <section className="role-hero">
+          <div className="role-hero-copy">
+            <span className="eyebrow">LIVE CIVIC OPS / JAIPUR METRO</span>
+            <h1>Turn city noise into confident action.</h1>
+            <p>
+              CityPulse brings together weather, traffic, transit, incident intelligence, and public communication into
+              one command platform built for fast, informed decisions.
+            </p>
 
-          <button onClick={() => navigate('/volunteer')} className="group rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-7 text-left transition hover:-translate-y-1 hover:border-emerald-400 hover:bg-emerald-500/15">
-            <span className="text-4xl" aria-hidden="true">✦</span>
-            <h2 className="mt-6 text-2xl font-bold text-white">Volunteer dashboard</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">Receive city alerts and coordinate response in real time. Publishing rights stay with the admin.</p>
-            <span className="mt-7 inline-flex rounded-lg bg-emerald-400 px-4 py-2 text-sm font-bold text-slate-950">Open volunteer board</span>
-          </button>
+            <div className="role-badges">
+              <span>Real-time visibility</span>
+              <span>Multi-role command</span>
+              <span>{demoMode ? 'Demo synced' : 'Live operations'}</span>
+            </div>
+          </div>
 
-          <button onClick={() => navigate('/admin')} className="group rounded-2xl border border-amber-500/30 bg-amber-500/10 p-7 text-left transition hover:-translate-y-1 hover:border-amber-400 hover:bg-amber-500/15">
-            <span className="text-4xl" aria-hidden="true">▣</span>
-            <h2 className="mt-6 text-2xl font-bold text-white">Admin dashboard</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">Monitor feeds and review registered users, notification choices, and location availability.</p>
-            <span className="mt-7 inline-flex rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-slate-950">Admin sign in</span>
-          </button>
-        </div>
+          <div className="role-hero-panel">
+            <div className="mini-grid">
+              <div>
+                <span>City pulse</span>
+                <strong>Stable</strong>
+                <small>89% system health</small>
+              </div>
+              <div>
+                <span>Active alerts</span>
+                <strong>12</strong>
+                <small>4 critical zones</small>
+              </div>
+              <div>
+                <span>District coverage</span>
+                <strong>6/6</strong>
+                <small>All zones online</small>
+              </div>
+              <div>
+                <span>Response SLA</span>
+                <strong>11 min</strong>
+                <small>Avg. dispatch time</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="role-cards" aria-label="CityPulse workspaces">
+          {workspaceCards.map((card) => (
+            <button
+              key={card.label}
+              type="button"
+              onClick={card.action}
+              className={`role-card role-card-${card.tone}`}
+            >
+              <div className="role-card-head">
+                <span className="role-card-icon" aria-hidden="true">{card.icon}</span>
+                <span className="role-card-tag">{card.label}</span>
+              </div>
+              <h2>{card.label}</h2>
+              <p>{card.text}</p>
+              <div className="role-metrics">
+                {card.metrics.map((metric) => (
+                  <span key={metric}>{metric}</span>
+                ))}
+              </div>
+              <span className="role-cta">{card.cta}</span>
+            </button>
+          ))}
+        </section>
       </div>
     </main>
   );

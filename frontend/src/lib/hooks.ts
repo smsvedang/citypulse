@@ -200,23 +200,9 @@ export function useAlerts() {
   }, []);
 
   const acknowledgeAlert = useCallback((id: string) => {
-    setAlerts((prev) => {
-      const next = prev.map((a) => (a.id === id ? { ...a, status: 'acknowledged' } : a));
-      if (typeof window !== 'undefined') {
-        const raw = window.localStorage.getItem('citypulse-demo-data-v1');
-        if (raw) {
-          try {
-            const parsed = JSON.parse(raw);
-            const updatedStore = { ...parsed, alerts: next };
-            window.localStorage.setItem('citypulse-demo-data-v1', JSON.stringify(updatedStore));
-            window.dispatchEvent(new Event(DEMO_DATA_UPDATE_EVENT));
-          } catch {
-            // ignore malformed local storage state
-          }
-        }
-      }
-      return next;
-    });
+    setAlerts((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, status: 'acknowledged' } : a))
+    );
   }, []);
 
   useDemoDataSync(fetchAlerts);

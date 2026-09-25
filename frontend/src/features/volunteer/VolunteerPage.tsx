@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAlerts } from '../../lib/hooks';
 
@@ -119,8 +119,19 @@ function VolunteerLayout() {
 }
 
 export function VolunteerDashboardPage() {
-  const { alerts } = useAlerts();
+  const { alerts, acknowledgeAlert } = useAlerts();
   const volunteerAlerts = alerts.filter((alert) => alert.status !== 'dismissed');
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  const [search, setSearch] = useState('');
+
+  const filteredAlerts = useMemo(() => {
+    return volunteerAlerts.filter((alert) => {
+      const text = `${alert.title} ${alert.body} ${alert.zone_id || 'CITY'}`.toLowerCase();
+      const matchesText = text.includes(search.toLowerCase());
+      const matchesPriority = priorityFilter === 'all' || alert.severity === priorityFilter;
+      return matchesText && matchesPriority;
+    });
+  }, [priorityFilter, search, volunteerAlerts]);
 
   return (
     <div className="space-y-8">
@@ -139,6 +150,27 @@ export function VolunteerDashboardPage() {
       </section>
 
       <section className="panel table-panel">
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search alert title or zone"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 md:max-w-xs"
+          />
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'high', 'medium', 'low'] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setPriorityFilter(option)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize ${priorityFilter === option ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-300'}`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="table-wrap">
           <table>
             <thead>
@@ -148,10 +180,11 @@ export function VolunteerDashboardPage() {
                 <th>Severity</th>
                 <th>Status</th>
                 <th>Updated</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {volunteerAlerts.map((alert: VolunteerAlert) => (
+              {filteredAlerts.map((alert: VolunteerAlert) => (
                 <tr key={alert.id}>
                   <td>
                     <strong>{alert.title}</strong>
@@ -161,11 +194,21 @@ export function VolunteerDashboardPage() {
                   <td><Status active={alert.severity === 'high' || alert.severity === 'medium'} tone={alert.severity} /></td>
                   <td>{alert.status}</td>
                   <td>{alert.created_at ? new Date(alert.created_at).toLocaleString() : 'now'}</td>
+                  <td>
+                    {alert.status === 'active' ? (
+                      <button type="button" onClick={() => acknowledgeAlert(alert.id)} className="rounded-full bg-slate-800 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-slate-700">
+                        Acknowledge
+                      </button>
+                    ) : (
+                      <span className="text-xs text-slate-400">Seen</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        {!filteredAlerts.length && <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-400">No matching alerts for this filter.</div>}
       </section>
     </div>
   );

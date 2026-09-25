@@ -16,7 +16,7 @@ const envSchema = z.object({
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_SERVICE_ACCOUNT_B64: z.string().optional(),
   FIRESTORE_EMULATOR_HOST: z.string().optional(),
-  DEMO_MODE: z.coerce.boolean().default(true),
+  DEMO_MODE: z.coerce.boolean().default(false),
   FEED_MODE_WEATHER: z.enum(['live', 'synthetic']).default('live'),
   FEED_MODE_TRAFFIC: z.enum(['live', 'synthetic']).default('live'),
   FEED_MODE_TRANSIT: z.enum(['live', 'synthetic']).default('live'),

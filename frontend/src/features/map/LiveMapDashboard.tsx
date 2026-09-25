@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAlerts, useEvents, usePulse, useZones } from '../../lib/hooks';
 import { RealMap } from '../../components/RealMap';
@@ -11,12 +11,22 @@ export function LiveMapDashboard() {
   const { alerts } = useAlerts();
   const [selectedZoneId, setSelectedZoneId] = useState('');
   const [filter, setFilter] = useState('all');
+  const [lastUpdated, setLastUpdated] = useState(() => new Date());
 
   const selectedZone = zones.find((zone) => zone.id === selectedZoneId) || zones[0];
   const zoneEvents = events.filter((event) => event.location?.zone === selectedZone?.id);
   const visibleEvents = filter === 'all' ? events : events.filter((event) => event.source === filter);
   const status = pulse?.status || 'Monitoring';
   const alertCount = alerts.filter((alert) => alert.status === 'active').length;
+
+  const quickActions = useMemo(
+    () => [
+      { label: 'Refresh feed', onClick: () => setLastUpdated(new Date()) },
+      { label: 'Focus top zone', onClick: () => setSelectedZoneId(pulse?.top_zone || zones[0]?.id || '') },
+      { label: 'Open alert board', onClick: () => navigate('/citizen/alerts') },
+    ],
+    [navigate, pulse?.top_zone, zones],
+  );
 
   return (
     <div className="citizen-dashboard">
@@ -32,6 +42,22 @@ export function LiveMapDashboard() {
           <small>{pulse?.top_zone ? `Focus: ${pulse.top_zone}` : 'Watching the civic grid now'}</small>
         </div>
       </section>
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        {quickActions.map((action) => (
+          <button
+            key={action.label}
+            type="button"
+            onClick={action.onClick}
+            className="inline-flex items-center rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/20"
+          >
+            {action.label}
+          </button>
+        ))}
+        <span className="ml-auto inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-300">
+          Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </span>
+      </div>
 
       <section className="citizen-stats">
         <Stat label="Signals now" value={events.length} detail="last 60 minutes" />

@@ -126,20 +126,124 @@ function AdminLayout() {
 }
 
 export function AdminDashboardPage() {
+  const navigate = useNavigate();
   const { zones } = useZones();
-  const { events, loading: eventsLoading } = useEvents(100);
+  const { events } = useEvents(100);
   const { alerts } = useAlerts();
   const { feedStatus, overallHealth } = useFeedStatus();
   const activeAlerts = alerts.filter((alert) => alert.status === 'active');
   const highSignals = events.filter((event) => Number(event.severity) >= 0.7);
+  const [lastUpdated, setLastUpdated] = useState(() => new Date());
+  const [demoMode, setDemoMode] = useState<boolean>(() => {
+    const stored = window.sessionStorage.getItem('citypulse-demo-mode');
+    return stored === null ? true : stored === 'true';
+  });
+  const [manualType, setManualType] = useState<'weather' | 'traffic'>('weather');
+  const [manualZoneId, setManualZoneId] = useState(zones[0]?.id || 'ZONE-1');
+  const [manualTitle, setManualTitle] = useState('Heavy rain alert');
+  const [manualBody, setManualBody] = useState('Waterlogging is affecting the main corridor. Please allow extra travel time.');
+  const [manualSeverity, setManualSeverity] = useState<number>(0.8);
+  const [manualBusy, setManualBusy] = useState(false);
+  const [manualMessage, setManualMessage] = useState('');
+
+  const incidentQueue = [
+    { title: 'Waterlogging near Ring Road', zone: 'ZONE-4', severity: 'High', status: 'Dispatching team', delta: '12 min ago' },
+    { title: 'Traffic gridlock on Amber Avenue', zone: 'ZONE-2', severity: 'Medium', status: 'Reroute active', delta: '7 min ago' },
+    { title: 'Metro platform crowding', zone: 'ZONE-1', severity: 'Medium', status: 'Monitoring', delta: '3 min ago' },
+    { title: 'Wind advisory for north belt', zone: 'ZONE-5', severity: 'Low', status: 'Alert broadcast', delta: '2 min ago' },
+  ];
+
+  const managementCards = [
+    { name: 'Zone operations', detail: '6 districts active', value: '94%', tone: 'cyan' },
+    { name: 'Volunteer network', detail: '42 field members', value: '7 teams', tone: 'emerald' },
+    { name: 'Public sendouts', detail: '3 channels', value: '2.4k users', tone: 'amber' },
+  ];
+
+  const healthRows = [
+    { name: 'Weather feeds', value: 92, tone: 'cyan' },
+    { name: 'Traffic flow', value: 74, tone: 'amber' },
+    { name: 'Transit sensors', value: 88, tone: 'green' },
+    { name: 'Citizen reach', value: 81, tone: 'red' },
+  ];
+
+  useEffect(() => {
+    window.sessionStorage.setItem('citypulse-demo-mode', String(demoMode));
+  }, [demoMode]);
+
+  useEffect(() => {
+    if (zones.length && !zones.some((zone) => zone.id === manualZoneId)) {
+      setManualZoneId(zones[0].id);
+    }
+  }, [manualZoneId, zones]);
+
+  const actions = [
+    { label: 'Open alert board', onClick: () => navigate('/admin/messages') },
+    { label: 'Review citizens', onClick: () => navigate('/admin/users') },
+    { label: 'Refresh now', onClick: () => setLastUpdated(new Date()) },
+    { label: demoMode ? 'Demo mode on' : 'Live mode on', onClick: () => setDemoMode((value) => !value) },
+  ];
+
+  const submitManualUpdate = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setManualBusy(true);
+    setManualMessage('');
+
+    try {
+      const zone = zones.find((item) => item.id === manualZoneId) || zones[0];
+      if (!zone) {
+        throw new Error('No zones are available to attach this update to.');
+      }
+
+      const payload = {
+        source: manualType,
+        type: manualType === 'weather' ? 'weather_alert' : 'traffic_incident',
+        severity: Number(manualSeverity),
+        confidence: 0.88,
+        location: {
+          lat: zone.center?.lat ?? 26.9124,
+          lng: zone.center?.lng ?? 75.7873,
+          zone: zone.id,
+        },
+        timestamp: new Date().toISOString(),
+        metadata: {
+          manual: true,
+          title: manualTitle.trim() || (manualType === 'weather' ? 'Weather update' : 'Traffic update'),
+          message: manualBody.trim() || 'Manual civic update logged by admin.',
+          subtype: manualType === 'weather' ? 'manual_weather' : 'manual_traffic',
+        },
+      };
+
+      const response = await api<{ data?: { accepted?: unknown[]; rejected?: unknown[] } }>('/api/events', {
+        method: 'POST',
+        headers: { ...adminHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const acceptedCount = (response?.data?.accepted ?? response?.accepted ?? []).length;
+      const statusLabel = manualType === 'weather' ? 'Weather' : 'Traffic';
+      setManualMessage(`${statusLabel} update added successfully for ${zone.id}. ${acceptedCount} event(s) recorded.`);
+      setManualTitle(manualType === 'weather' ? 'Heavy rain alert' : 'Traffic disruption alert');
+      setManualBody(manualType === 'weather' ? 'Waterlogging is affecting the main corridor. Please allow extra travel time.' : 'Traffic is slowed near the key corridor. Consider alternate routes.');
+      setLastUpdated(new Date());
+    } catch (reason) {
+      setManualMessage(reason instanceof Error ? reason.message : 'Manual update could not be posted.');
+    } finally {
+      setManualBusy(false);
+    }
+  };
 
   return (
-    <div className="space-y-8">
+    <div className="ops-suite">
       <PageHeading
-        eyebrow="Live overview"
-        title="The city, at a glance."
-        description="Signals, pressure points, and reach across the monitored grid."
-        action={<span className="last-sync"><span className="pulse-dot" /> Refreshing every few seconds</span>}
+        eyebrow="Command center"
+        title="The city, under control."
+        description="Monitor signals, coordinate response, and push precise civic updates across every district."
+        action={
+          <div className="ops-header-actions">
+            <span className="last-sync"><span className="pulse-dot" /> Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <button type="button" className="dashboard-ghost-button" onClick={() => setLastUpdated(new Date())}>Refresh</button>
+          </div>
+        }
       />
 
       <section className="metric-grid">
@@ -147,6 +251,160 @@ export function AdminDashboardPage() {
         <Metric label="Active alerts" value={String(activeAlerts.length)} detail="Thresholds requiring attention" tone="red" />
         <Metric label="Live signals" value={String(events.length)} detail={`${highSignals.length} high-confidence signals`} tone="blue" />
         <Metric label="Monitored zones" value={String(zones.length)} detail="Jaipur civic grid" tone="gold" />
+      </section>
+
+      <section className="panel">
+        <PanelHeader title="Operations shortcuts" meta="Fast access" />
+        <div className="flex flex-wrap gap-2">
+          {actions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              onClick={action.onClick}
+              className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-cyan-500 hover:text-white"
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="ops-boards">
+        <div className="panel ops-panel">
+          <PanelHeader title="Priority incident board" meta="Live queue" />
+          <div className="ops-incident-list">
+            {incidentQueue.map((item) => (
+              <div key={item.title} className="ops-incident-item">
+                <div className="ops-incident-copy">
+                  <strong>{item.title}</strong>
+                  <small>{item.zone} · {item.delta}</small>
+                </div>
+                <div className="ops-incident-meta">
+                  <span className={`priority-pill ${item.severity.toLowerCase()}`}>{item.severity}</span>
+                  <small>{item.status}</small>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="panel ops-panel">
+          <PanelHeader title="Operational health" meta="Cross-domain" />
+          <div className="health-stack">
+            {healthRows.map((row) => (
+              <div key={row.name} className="health-row">
+                <div className="health-label-row">
+                  <span>{row.name}</span>
+                  <strong>{row.value}%</strong>
+                </div>
+                <div className="health-bar-track">
+                  <span className={`health-bar ${row.tone}`} style={{ width: `${row.value}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="ops-management-grid">
+        <div className="panel">
+          <PanelHeader title="Zone operations" meta="6 districts" />
+          <div className="resource-list">
+            {zones.slice(0, 4).map((zone) => (
+              <div key={zone.id} className="resource-row">
+                <div>
+                  <strong>{zone.name}</strong>
+                  <small>{zone.id}</small>
+                </div>
+                <span>{zone.place || 'Urban district'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="panel">
+          <PanelHeader title="Response teams" meta="Dispatch" />
+          <div className="resource-list">
+            {[
+              ['Field unit 14', 'On route'],
+              ['Traffic control', 'Active'],
+              ['Medical desk', 'Monitoring'],
+              ['Transit ops', 'Ready'],
+            ].map(([name, status]) => (
+              <div key={name} className="resource-row">
+                <div>
+                  <strong>{name}</strong>
+                  <small>Jaipur dispatch</small>
+                </div>
+                <span className="status-badge">{status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="panel">
+          <PanelHeader title="Public comms" meta="Delivery" />
+          <div className="resource-list">
+            {managementCards.map((card) => (
+              <div key={card.name} className="resource-row accent-row">
+                <div>
+                  <strong>{card.name}</strong>
+                  <small>{card.detail}</small>
+                </div>
+                <span className={`resource-value ${card.tone}`}>{card.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="panel">
+        <PanelHeader title="Manual civic update" meta="Add live feed input" />
+        <form onSubmit={submitManualUpdate} className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label>
+              Update type
+              <select value={manualType} onChange={(event) => setManualType(event.target.value as 'weather' | 'traffic')}>
+                <option value="weather">Weather</option>
+                <option value="traffic">Traffic</option>
+              </select>
+            </label>
+
+            <label>
+              Zone
+              <select value={manualZoneId} onChange={(event) => setManualZoneId(event.target.value)}>
+                {zones.map((zone) => (
+                  <option key={zone.id} value={zone.id}>{zone.id} · {zone.name}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Title
+            <input value={manualTitle} onChange={(event) => setManualTitle(event.target.value)} placeholder={manualType === 'weather' ? 'Heavy rain alert' : 'Traffic disruption alert'} required />
+          </label>
+
+          <label>
+            Details
+            <textarea value={manualBody} onChange={(event) => setManualBody(event.target.value)} rows={4} placeholder="Add the operational details for residents or volunteers." required />
+          </label>
+
+          <label>
+            Severity ({manualSeverity.toFixed(2)})
+            <input
+              type="range"
+              min={0.1}
+              max={1}
+              step={0.05}
+              value={manualSeverity}
+              onChange={(event) => setManualSeverity(Number(event.target.value))}
+            />
+          </label>
+
+          {manualMessage && <p className={manualMessage.includes('successfully') || manualMessage.includes('recorded') ? 'success-text' : 'error-text'}>{manualMessage}</p>}
+          <button type="submit" disabled={manualBusy} className="button button-primary">{manualBusy ? 'Posting update...' : `Add ${manualType} update ↗`}</button>
+        </form>
       </section>
     </div>
   );
@@ -169,9 +427,36 @@ export function AdminMessagesPage() {
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
 
+  const messageTemplates = [
+    {
+      label: 'Weather alert',
+      title: 'Heavy rain affecting commute routes',
+      body: 'Slow-moving rain is reducing visibility and increasing water accumulation near major corridors. Residents should avoid low-lying routes and allow extra travel time.',
+      zone: 'CITY',
+    },
+    {
+      label: 'Traffic reroute',
+      title: 'Traffic diversion active on the ring road',
+      body: 'Authorities have rerouted traffic around the ring road due to congestion and roadwork. Please expect slower travel for the next 45 minutes.',
+      zone: 'ZONE-4',
+    },
+    {
+      label: 'Transit update',
+      title: 'Metro headway reduced due to weather delay',
+      body: 'Train frequency is temporarily reduced while operations stabilize after the weather impact. Follow agent instructions and expect minor delays.',
+      zone: 'ZONE-2',
+    },
+  ];
+
   useEffect(() => {
     window.sessionStorage.setItem('citypulse-demo-mode', String(demoMode));
   }, [demoMode]);
+
+  const applyTemplate = (template: (typeof messageTemplates)[number]) => {
+    setZoneId(template.zone);
+    setTitle(template.title);
+    setBody(template.body);
+  };
 
   const send = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -223,6 +508,19 @@ export function AdminMessagesPage() {
       <section className="message-layout">
         <form className="panel message-form" onSubmit={send}>
           <PanelHeader title="Compose notice" meta={demoMode ? 'Demo delivery enabled' : 'Live delivery mode'} />
+
+          <div className="mb-4 flex flex-wrap gap-2">
+            {messageTemplates.map((template) => (
+              <button
+                key={template.label}
+                type="button"
+                onClick={() => applyTemplate(template)}
+                className="rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-slate-200 transition hover:border-cyan-500 hover:text-white"
+              >
+                {template.label}
+              </button>
+            ))}
+          </div>
 
           <label>
             Audience
@@ -293,6 +591,8 @@ export function AdminUsersPage() {
   });
   const [users, setUsers] = useState<AdminUser[]>(demoMode ? demoUsers : []);
   const [error, setError] = useState('');
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<'all' | 'web' | 'email' | 'critical'>('all');
 
   useEffect(() => {
     if (demoMode) {
@@ -305,6 +605,37 @@ export function AdminUsersPage() {
       .then(setUsers)
       .catch((reason) => setError(reason instanceof Error ? reason.message : 'Audience unavailable.'));
   }, [demoMode]);
+
+  const visibleUsers = users.filter((user) => {
+    const matchesQuery = `${user.displayName || ''} ${user.email || ''}`.toLowerCase().includes(query.trim().toLowerCase());
+    if (!matchesQuery) return false;
+    if (filter === 'web') return user.webOptIn;
+    if (filter === 'email') return user.emailOptIn;
+    if (filter === 'critical') return user.criticalOnly;
+    return true;
+  });
+
+  const exportAudience = () => {
+    const rows = [
+      ['Name', 'Email', 'Web', 'Email Opt-in', 'Critical Only', 'Updated At'],
+      ...users.map((user) => [
+        user.displayName || 'Unnamed citizen',
+        user.email || '',
+        user.webOptIn ? 'yes' : 'no',
+        user.emailOptIn ? 'yes' : 'no',
+        user.criticalOnly ? 'yes' : 'no',
+        user.updatedAt || '',
+      ]),
+    ];
+    const csv = rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'citypulse-audience.csv';
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-8">
@@ -322,6 +653,30 @@ export function AdminUsersPage() {
       </section>
 
       <section className="panel table-panel">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search citizen or email"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 md:max-w-xs"
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            {(['all', 'web', 'email', 'critical'] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setFilter(option)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize ${filter === option ? 'bg-cyan-500 text-slate-950' : 'bg-slate-900 text-slate-300'}`}
+              >
+                {option}
+              </button>
+            ))}
+            <button type="button" onClick={exportAudience} className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-cyan-500 hover:text-white">
+              Export CSV
+            </button>
+          </div>
+        </div>
+
         {error && <p className="error-text">{error}</p>}
         <div className="table-wrap">
           <table>
@@ -330,13 +685,13 @@ export function AdminUsersPage() {
                 <th>Citizen</th>
                 <th>Email</th>
                 <th>Web</th>
-                <th>Email</th>
+                <th>Delivery</th>
                 <th>Mode</th>
                 <th>Updated</th>
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {visibleUsers.map((user) => (
                 <tr key={user.uid}>
                   <td>
                     <strong>{user.displayName || 'Unnamed citizen'}</strong>
@@ -352,7 +707,7 @@ export function AdminUsersPage() {
             </tbody>
           </table>
         </div>
-        {!users.length && !error && <Empty text="No registered citizens yet" />}
+        {!visibleUsers.length && !error && <Empty text="No matching citizens found" />}
       </section>
     </div>
   );
