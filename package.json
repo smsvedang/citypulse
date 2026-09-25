@@ -8,13 +8,19 @@
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
     "dev:intelligence": "npm --prefix intelligence run dev",
-    "build": "npm --prefix frontend run build",
+    "build": "npm run build --workspace frontend",
     "test": "npm --prefix frontend run test --if-present && npm --prefix backend run test --if-present && npm --prefix intelligence run test --if-present",
     "smoke": "node scripts/smoke.js",
     "contract:check": "node scripts/contract-check.js",
     "demo": "node scripts/demo.js",
     "seed:zones": "npm --prefix backend run seed:zones"
   },
+  "workspaces": [
+    "shared",
+    "frontend",
+    "backend",
+    "intelligence"
+  ],
   "devDependencies": {
     "concurrently": "^8.2.2"
   }

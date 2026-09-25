@@ -1,4 +1,21 @@
-const API = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+
+function resolveApiUrl(path: string) {
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+
+  if (!API_BASE || API_BASE === '/api') {
+    return normalizedPath.startsWith('/api') ? normalizedPath : `/api${normalizedPath}`;
+  }
+
+  const apiPath = normalizedPath.startsWith('/api') ? normalizedPath : `/api${normalizedPath}`;
+  if (API_BASE.endsWith('/api')) {
+    return `${API_BASE}${apiPath.replace(/^\/api/, '')}`;
+  }
+
+  return `${API_BASE}${apiPath}`;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -10,8 +27,7 @@ export class ApiError extends Error {
 }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const normalizedPath = API.endsWith('/api') && path.startsWith('/api/') ? path.slice(4) : path;
-  const r = await fetch(`${API}${normalizedPath}`, {
+  const r = await fetch(resolveApiUrl(path), {
     ...init,
     headers: {
       'Content-Type': 'application/json',

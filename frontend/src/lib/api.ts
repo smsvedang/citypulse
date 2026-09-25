@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
 
 export class ApiError extends Error {
   constructor(message: string, public status?: number, public details?: unknown) {
@@ -7,12 +7,26 @@ export class ApiError extends Error {
   }
 }
 
+function resolveApiUrl(path: string) {
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+
+  if (!BASE_URL || BASE_URL === '/api') {
+    return normalizedPath.startsWith('/api') ? normalizedPath : `/api${normalizedPath}`;
+  }
+
+  const apiPath = normalizedPath.startsWith('/api') ? normalizedPath : `/api${normalizedPath}`;
+  if (BASE_URL.endsWith('/api')) {
+    return `${BASE_URL}${apiPath.replace(/^\/api/, '')}`;
+  }
+
+  return `${BASE_URL}${apiPath}`;
+}
+
 export async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
-  const normalizedPath = BASE_URL.endsWith('/api') && path.startsWith('/api/') ? path.slice(4) : path;
-  const url = normalizedPath.startsWith('http')
-    ? normalizedPath
-    : `${BASE_URL}${normalizedPath.startsWith('/') ? '' : '/'}${normalizedPath}`;
-  
+  const url = resolveApiUrl(path);
+
   const res = await fetch(url, {
     ...options,
     headers: {
