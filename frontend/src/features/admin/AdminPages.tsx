@@ -105,10 +105,14 @@ function AdminLayout() {
             <p>Friday, 25 September 2026</p>
           </div>
           <div className="topbar-status">
-            <button type="button" aria-label="View notifications" className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-200">
+            <NavLink
+              to="/admin/messages"
+              aria-label="View notifications"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-200 transition hover:border-cyan-500/50 hover:text-white"
+            >
               <span aria-hidden="true">🔔</span>
               <span>{notificationCount}</span>
-            </button>
+            </NavLink>
             <ThemeToggle />
             <span className="pulse-dot" /> Live data stream <span className="avatar">OP</span>
           </div>
