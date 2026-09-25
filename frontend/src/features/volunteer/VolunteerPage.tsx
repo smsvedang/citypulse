@@ -66,6 +66,8 @@ export function VolunteerGuard() {
 
 function VolunteerLayout() {
   const navigate = useNavigate();
+  const { alerts } = useAlerts();
+  const notificationCount = alerts.filter((alert) => alert.status === 'active').length;
   const navItems = [{ path: '/volunteer/dashboard', label: 'Alerts', icon: '⚑' }];
 
   return (
@@ -99,6 +101,10 @@ function VolunteerLayout() {
             <p>Volunteer operations centre</p>
           </div>
           <div className="topbar-status">
+            <button type="button" aria-label="View notifications" className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-200">
+              <span aria-hidden="true">🔔</span>
+              <span>{notificationCount}</span>
+            </button>
             <span className="pulse-dot" /> Live alert feed <span className="avatar">VR</span>
           </div>
         </header>

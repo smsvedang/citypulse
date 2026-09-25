@@ -8,6 +8,7 @@ export function Layout() {
   const { overallHealth, feedStatus } = useFeedStatus();
   const { events } = useEvents(20);
   const location = useLocation();
+  const notificationCount = events.length + feedStatus.filter((item) => item.health !== 'healthy').length;
   const [timeStr, setTimeStr] = useState<string>('');
   const [user, setUser] = useState<User | null>(null);
 
@@ -99,6 +100,20 @@ export function Layout() {
               SIMULATED
             </span>
           )}
+
+          <NavLink
+            to="/alerts"
+            aria-label="View notifications"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/80 px-2.5 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-cyan-500/50 hover:text-white"
+          >
+            <span aria-hidden="true">🔔</span>
+            <span className="hidden sm:inline">Alerts</span>
+            {notificationCount > 0 && (
+              <span className="inline-flex min-w-5 justify-center rounded-full bg-cyan-500 px-1.5 py-0.5 text-[10px] font-bold text-slate-950">
+                {notificationCount}
+              </span>
+            )}
+          </NavLink>
 
           <NavLink
             to="/demo"

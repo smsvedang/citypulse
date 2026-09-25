@@ -1,7 +1,31 @@
 import { useState, useEffect, useCallback } from 'react';
-import { api } from './api';
+import { api, DEMO_DATA_UPDATE_EVENT } from './api';
 
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === 'true';
+
+function useDemoDataSync(onRefresh: () => void) {
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const handleStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === 'citypulse-demo-data-v1') {
+        onRefresh();
+      }
+    };
+
+    const handleDemoUpdate = () => onRefresh();
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener(DEMO_DATA_UPDATE_EVENT, handleDemoUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener(DEMO_DATA_UPDATE_EVENT, handleDemoUpdate);
+    };
+  }, [onRefresh]);
+}
 
 export function useZones() {
   const [zones, setZones] = useState<any[]>([]);
@@ -29,6 +53,8 @@ export function useZones() {
       setLoading(false);
     }
   }, []);
+
+  useDemoDataSync(fetchZones);
 
   useEffect(() => {
     fetchZones();
@@ -65,6 +91,8 @@ export function useEvents(limit = 200) {
       setLoading(false);
     }
   }, [limit]);
+
+  useDemoDataSync(fetchEvents);
 
   useEffect(() => {
     fetchEvents();
@@ -179,7 +207,9 @@ export function useAlerts() {
         if (raw) {
           try {
             const parsed = JSON.parse(raw);
-            window.localStorage.setItem('citypulse-demo-data-v1', JSON.stringify({ ...parsed, alerts: next }));
+            const updatedStore = { ...parsed, alerts: next };
+            window.localStorage.setItem('citypulse-demo-data-v1', JSON.stringify(updatedStore));
+            window.dispatchEvent(new Event(DEMO_DATA_UPDATE_EVENT));
           } catch {
             // ignore malformed local storage state
           }
@@ -188,6 +218,8 @@ export function useAlerts() {
       return next;
     });
   }, []);
+
+  useDemoDataSync(fetchAlerts);
 
   useEffect(() => {
     fetchAlerts();
@@ -223,6 +255,8 @@ export function useFeedStatus() {
       setLoading(false);
     }
   }, []);
+
+  useDemoDataSync(fetchFeedStatus);
 
   useEffect(() => {
     fetchFeedStatus();
@@ -263,6 +297,8 @@ export function usePulse() {
       setLoading(false);
     }
   }, []);
+
+  useDemoDataSync(fetchPulse);
 
   useEffect(() => {
     fetchPulse();
