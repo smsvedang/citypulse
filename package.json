@@ -3,24 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "shared",
-    "backend",
-    "intelligence",
-    "simulator",
-    "frontend"
-  ],
   "scripts": {
     "dev": "concurrently -k -p \"[{name}]\" -n \"FE,BE,INT\" -c \"cyan,green,yellow\" \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:intelligence\"",
-    "dev:frontend": "npm run dev --workspace=frontend",
-    "dev:backend": "npm run dev --workspace=backend",
-    "dev:intelligence": "npm run dev --workspace=intelligence",
-    "build": "npm run build --workspace=frontend",
-    "test": "npm run test --workspaces --if-present",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:intelligence": "npm --prefix intelligence run dev",
+    "build": "npm --prefix frontend run build",
+    "test": "npm --prefix frontend run test --if-present && npm --prefix backend run test --if-present && npm --prefix intelligence run test --if-present",
     "smoke": "node scripts/smoke.js",
     "contract:check": "node scripts/contract-check.js",
     "demo": "node scripts/demo.js",
-    "seed:zones": "npm run seed:zones --workspace=backend"
+    "seed:zones": "npm --prefix backend run seed:zones"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
